@@ -1,3 +1,5 @@
+#include <Wire.h>
+
 const int SensorCenter = 0;
 
 const int UltraSensorTrig = 4;  //out
@@ -27,13 +29,14 @@ void setup() {
   pinMode(buzzerPinLeft, OUTPUT);
 
   // Setup camera
-
+  Wire.begin();
   Serial.begin(9600);
   //Sensor down initial value if detect big change then trigger, if reset to around initial
   //Accelarometer for falling detection
 }
 
 void loop() {
+
 
   // power values reset
   power_right = 0;
@@ -59,8 +62,8 @@ void loop() {
 
   double duration_left = pulseIn(UltraSensorEcho2, HIGH);
   double distance_left = (duration_left / 2) * 0.343;
-  Serial.print("Left Sensor Value: ");
-  Serial.println(distance_left);  //in centimeters 0-15000
+  //Serial.print("Left Sensor Value: ");
+  //Serial.println(distance_left);  //in centimeters 0-15000
 
   // Right USS trip
   if (distance_right < 2000) {
@@ -80,21 +83,25 @@ void loop() {
   double distanceCenter = 0;
 
   distanceCenter = digitalRead(InfraredSensorPin);
-  Serial.print("IR Sensor Value: ");
-  Serial.println(distanceCenter);
+  //Serial.print("IR Sensor Value: ");
+  //Serial.println(distanceCenter);
 
   //check for downward buzzer trip
   if (distanceCenter == 0) {
-    Serial.println("IR Value Tripped");
+    //Serial.println("IR Value Tripped");
     // Downward sensor tripped
+    analogWrite(buzzPin, 50);
+    delay(10);
+    analogWrite(buzzPin, 0);
+
   }
 
-  Serial.print("Sensor value:");
-  Serial.println(SensorCenter);
+  //Serial.print("Sensor value:");
+  //Serial.println(SensorCenter);
 
   // set center buzzer intensity
   double centerBuzzer = (power_left * .50) + (power_right * .50);
-  Serial.println(centerBuzzer);
+  //Serial.println(centerBuzzer);
 
   // set right and left buzzer intensity
   double leftBuzzer = power_left;
@@ -115,47 +122,53 @@ void loop() {
   }
 
   // trigger right buzzer
-  if (rightBuzzer > 0) {
-    tone(buzzPinRight, 2500);
-    delay(15);
-    noTone(buzzerPinRight);
+   if (rightBuzzer > 0) {
+     tone(buzzerPinRight, 500);
+     delay(15);
+     noTone(buzzerPinRight);
+   }
+
+  Wire.requestFrom(8, 6);
+  while (Wire.available()) { // peripheral may send less than requested
+    char c = Wire.read(); // receive a byte as character
+    Serial.print(c);         // print the character
   }
 
   // get vision detection response
   // if confidence rate works out to confident object
   // buzzer will have certain patterns for different objects
 
-  if (camera == "STAIRSUP") {
-    //Tone Ascending infront buzzer
-    for (int i = 0; i < 10; i++) {
-      tone(buzzPin, i * centerBuzzer);
-    }
-    noTone(buzzPin);
-  }
+  // if (camera == "STAIRSUP") {
+  //   //Tone Ascending infront buzzer
+  //   for (int i = 0; i < 10; i++) {
+  //     tone(buzzPin, i * centerBuzzer);
+  //   }
+  //   noTone(buzzPin);
+  // }
 
-  if (camera == "STAIRSDOWN") {
-    //Tone Descending infront buzzer
-    for (int i = 10; i > 0; i--) {
-      tone(buzzPin, i * centerBuzzer);
-    }
-    noTone(buzzPin);
-  }
+  // if (camera == "STAIRSDOWN") {
+  //   //Tone Descending infront buzzer
+  //   for (int i = 10; i > 0; i--) {
+  //     tone(buzzPin, i * centerBuzzer);
+  //   }
+  //   noTone(buzzPin);
+  // }
 
-  if (camera == "CHAIR") {
-    analogWrite(buzzPin, 3 * centerBuzzer);
-    delay(25);
-    analogWrite(buzzPin, 3 * centerBuzzer);
-    delay(25);
-    analogWrite(buzzPin, 0);
-    //Long Same Tone infront buzzer
-  }
+  // if (camera == "CHAIR") {
+  //   analogWrite(buzzPin, 3 * centerBuzzer);
+  //   delay(25);
+  //   analogWrite(buzzPin, 3 * centerBuzzer);
+  //   delay(25);
+  //   analogWrite(buzzPin, 0);
+  //   //Long Same Tone infront buzzer
+  // }
   
-  if (camera == "TABLE") {
-    //Double Medium Length Tone infront buzzer
-    analogWrite(buzzPin, 3 * centerBuzzer);
-    delay(50);
-    analogWrite(buzzPin, 0);
-  }
+  // if (camera == "TABLE") {
+  //   //Double Medium Length Tone infront buzzer
+  //   analogWrite(buzzPin, 3 * centerBuzzer);
+  //   delay(50);
+  //   analogWrite(buzzPin, 0);
+  // }
 
   // get accelerometer data
   // detect large change, turn fall mode on, every cycle while on will add to counter
@@ -164,6 +177,6 @@ void loop() {
   // if fall mode cycles up to 20, then SOS
 
   // wait 500ms
-  Serial.println("================");
+  //Serial.println("================");
   delay(500);
 }
